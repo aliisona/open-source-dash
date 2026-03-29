@@ -1,62 +1,79 @@
 import { Router, Request, Response } from 'express'
-
-// TODO: Import real GitHub service once implemented
-// import { fetchProjects, fetchTrending } from '../services/githubService'
+import {
+  fetchDiscoverProjects,
+  fetchTrendingProjects,
+  fetchRepoDetails,
+  fetchRepoIssues,
+} from '../services/githubService'
 
 const router = Router()
 
 /**
  * GET /api/projects
- * Returns a list of discoverable open-source projects.
- * TODO: Replace mock data with real GitHub API calls.
+ * Returns beginner-friendly projects with good first issues.
+ * Cached for 1 hour.
  */
-router.get('/', (_req: Request, res: Response) => {
-  res.json({
-    data: [],
-    message: 'TODO: wire up GitHub API in src/services/githubService.ts',
-  })
+router.get('/', async (_req: Request, res: Response) => {
+  try {
+    const projects = await fetchDiscoverProjects()
+    res.json({ data: projects })
+  } catch (err) {
+    console.error('GET /api/projects failed:', err)
+    res.status(500).json({ error: 'Failed to fetch projects from GitHub' })
+  }
 })
 
 /**
  * GET /api/projects/trending
- * Returns trending projects sorted by star activity.
- * TODO: Query GitHub trending or sort by recent star velocity.
+ * Returns trending projects sorted by stars, pushed in last 7 days.
+ * Cached for 1 hour.
  */
-router.get('/trending', (_req: Request, res: Response) => {
-  res.json({
-    data: [],
-    message: 'TODO: implement trending query',
-  })
+router.get('/trending', async (_req: Request, res: Response) => {
+  try {
+    const projects = await fetchTrendingProjects()
+    res.json({ data: projects })
+  } catch (err) {
+    console.error('GET /api/projects/trending failed:', err)
+    res.status(500).json({ error: 'Failed to fetch trending projects from GitHub' })
+  }
 })
 
 /**
  * GET /api/projects/:owner/:repo
- * Returns details for a single repository including open issues.
- * TODO: Proxy to GitHub REST API — GET /repos/{owner}/{repo}
+ * Returns details for a single repository.
+ * Cached for 30 minutes.
  */
-router.get('/:owner/:repo', (req: Request, res: Response) => {
+router.get('/:owner/:repo', async (req: Request, res: Response) => {
   const { owner, repo } = req.params
-  res.json({
-    data: null,
-    message: `TODO: fetch https://api.github.com/repos/${owner}/${repo}`,
-  })
+  try {
+    const project = await fetchRepoDetails(owner, repo)
+    if (!project) {
+      res.status(404).json({ error: `Repo ${owner}/${repo} not found` })
+      return
+    }
+    res.json({ data: project })
+  } catch (err) {
+    console.error(`GET /api/projects/${owner}/${repo} failed:`, err)
+    res.status(500).json({ error: 'Failed to fetch repo details from GitHub' })
+  }
 })
 
 /**
  * GET /api/projects/:owner/:repo/issues
  * Returns open issues for a repository.
- * TODO: Proxy to GitHub REST API — GET /repos/{owner}/{repo}/issues
- *       Filter by label "good first issue" when query param ?beginner=true
+ * Add ?beginner=true to filter by "good first issue" label.
+ * Cached for 15 minutes.
  */
-router.get('/:owner/:repo/issues', (req: Request, res: Response) => {
+router.get('/:owner/:repo/issues', async (req: Request, res: Response) => {
   const { owner, repo } = req.params
-  const { beginner } = req.query
-  res.json({
-    data: [],
-    message: `TODO: fetch https://api.github.com/repos/${owner}/${repo}/issues${
-      beginner === 'true' ? '?labels=good+first+issue' : ''
-    }`,
-  })
+  const goodFirstOnly = req.query.beginner === 'true'
+  try {
+    const issues = await fetchRepoIssues(owner, repo, goodFirstOnly)
+    res.json({ data: issues })
+  } catch (err) {
+    console.error(`GET /api/projects/${owner}/${repo}/issues failed:`, err)
+    res.status(500).json({ error: 'Failed to fetch issues from GitHub' })
+  }
 })
 
 export default router

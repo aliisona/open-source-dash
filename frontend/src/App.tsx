@@ -15,19 +15,27 @@ const TABS: Tab[] = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>('discover')
+  const [savedKey, setSavedKey] = useState(0)
+
+  const handleTabChange = (id: TabId) => {
+    // Force SavedPage to remount every time user navigates to it
+    // so it always fetches fresh data from Supabase
+    if (id === 'saved') setSavedKey((k) => k + 1)
+    setActiveTab(id)
+  }
 
   const renderPage = () => {
     switch (activeTab) {
       case 'discover': return <DiscoverPage />
       case 'trending': return <TrendingPage />
-      case 'saved':    return <SavedPage />
+      case 'saved':    return <SavedPage key={savedKey} />
     }
   }
 
   return (
     <AuthProvider>
       <DashboardLayout>
-        <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
+        <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
         {renderPage()}
       </DashboardLayout>
     </AuthProvider>

@@ -5,7 +5,6 @@ import { Project } from '../types'
 // Helpers
 // ---------------------------------------------------------------------------
 
-// Maps a Project (frontend shape) to a Supabase row
 function toRow(project: Project, userId: string) {
   return {
     user_id: userId,
@@ -24,7 +23,6 @@ function toRow(project: Project, userId: string) {
   }
 }
 
-// Maps a Supabase row back to a Project (frontend shape)
 function fromRow(row: Record<string, unknown>): Project {
   return {
     id: row.repo_id as string,
@@ -48,11 +46,18 @@ function fromRow(row: Record<string, unknown>): Project {
 
 /**
  * Fetch all saved projects for the currently signed-in user.
+ * Explicitly verifies session first to avoid RLS silent failures.
  */
 export async function getSavedProjects(): Promise<Project[]> {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+  if (sessionError) throw new Error(sessionError.message)
+  if (!session) throw new Error('Not authenticated')
+
   const { data, error } = await supabase
     .from('saved_projects')
     .select('*')
+    .eq('user_id', session.user.id)
     .order('created_at', { ascending: false })
 
   if (error) throw new Error(error.message)

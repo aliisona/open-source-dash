@@ -78,3 +78,7 @@ backend/src/
 - [ ] Issue detail drawer/modal on ProjectCard
 - [ ] Search bar
 - [ ] GitHub OAuth for higher API rate limits
+
+# Acknowledgement
+
+Idea inspired from my current Tech for Social Good Project: Social Good Marketplace for non-profit organizations to post for developers. Code is completely new from previous work and this project is meant as an learning experience for me to use Zed and try out GitHub API.
