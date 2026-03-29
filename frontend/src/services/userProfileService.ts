@@ -91,6 +91,7 @@ export async function fetchUserStats(username: string): Promise<GitHubUserStats>
     company: string | null
     location: string | null
     html_url: string
+    created_at: string
   }>(`/users/${username}`)
 
   return {
@@ -104,6 +105,7 @@ export async function fetchUserStats(username: string): Promise<GitHubUserStats>
     company: data.company,
     location: data.location,
     profileUrl: data.html_url,
+    createdAt: data.created_at,
   }
 }
 

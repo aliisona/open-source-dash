@@ -4,10 +4,6 @@ import { cache } from '../lib/cache'
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 const BASE_URL = 'https://api.github.com'
 
-// ---------------------------------------------------------------------------
-// Axios client with GitHub auth headers
-// ---------------------------------------------------------------------------
-
 const github = axios.create({
   baseURL: BASE_URL,
   headers: {
@@ -16,10 +12,6 @@ const github = axios.create({
     ...(GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {}),
   },
 })
-
-// ---------------------------------------------------------------------------
-// Language color map
-// ---------------------------------------------------------------------------
 
 const LANGUAGE_COLORS: Record<string, string> = {
   JavaScript: '#f7df1e',
@@ -45,10 +37,6 @@ function getLanguageColor(language: string | null): string {
   if (!language) return '#888888'
   return LANGUAGE_COLORS[language] ?? '#888888'
 }
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
 
 export interface GitHubRepo {
   id: number
@@ -76,6 +64,19 @@ export interface Project {
   topics: string[]
   lastUpdated: string
   repoUrl: string
+}
+
+// ---------------------------------------------------------------------------
+// Contributor fit types
+// ---------------------------------------------------------------------------
+
+export interface ContributorFit {
+  avgContributions: number      // avg commits to this repo among top contributors
+  avgPublicRepos: number        // avg number of public repos
+  avgFollowers: number          // avg followers
+  avgAccountAgeDays: number     // avg account age in days
+  topLanguage: string           // most common primary language among top contributors
+  contributorCount: number      // how many contributors were sampled
 }
 
 // ---------------------------------------------------------------------------
@@ -115,53 +116,39 @@ async function normalizeRepo(repo: GitHubRepo): Promise<Project> {
 }
 
 // ---------------------------------------------------------------------------
-// Discover — beginner-friendly repos with good first issues
-// Cache TTL: 1 hour
+// Discover
 // ---------------------------------------------------------------------------
 
 export async function fetchDiscoverProjects(): Promise<Project[]> {
   const CACHE_KEY = 'projects:discover'
-  const TTL = 3600 // 1 hour
+  const TTL = 3600
 
   const cached = cache.get<Project[]>(CACHE_KEY, TTL)
-  if (cached) {
-    console.log('[cache hit] projects:discover')
-    return cached
-  }
+  if (cached) { console.log('[cache hit] projects:discover'); return cached }
 
   console.log('[cache miss] fetching discover projects from GitHub...')
 
   const query = 'good-first-issues:>5 stars:>500 archived:false'
   const { data } = await github.get('/search/repositories', {
-    params: {
-      q: query,
-      sort: 'updated',
-      order: 'desc',
-      per_page: 36,
-    },
+    params: { q: query, sort: 'updated', order: 'desc', per_page: 36 },
   })
 
   const repos: GitHubRepo[] = data.items ?? []
   const projects = await Promise.all(repos.map(normalizeRepo))
-
   cache.set(CACHE_KEY, projects, TTL)
   return projects
 }
 
 // ---------------------------------------------------------------------------
-// Trending — most starred repos pushed to in the last 7 days
-// Cache TTL: 1 hour
+// Trending
 // ---------------------------------------------------------------------------
 
 export async function fetchTrendingProjects(): Promise<Project[]> {
   const CACHE_KEY = 'projects:trending'
-  const TTL = 3600 // 1 hour
+  const TTL = 3600
 
   const cached = cache.get<Project[]>(CACHE_KEY, TTL)
-  if (cached) {
-    console.log('[cache hit] projects:trending')
-    return cached
-  }
+  if (cached) { console.log('[cache hit] projects:trending'); return cached }
 
   console.log('[cache miss] fetching trending projects from GitHub...')
 
@@ -171,37 +158,25 @@ export async function fetchTrendingProjects(): Promise<Project[]> {
 
   const query = `stars:>1000 pushed:>${dateStr} archived:false`
   const { data } = await github.get('/search/repositories', {
-    params: {
-      q: query,
-      sort: 'stars',
-      order: 'desc',
-      per_page: 36,
-    },
+    params: { q: query, sort: 'stars', order: 'desc', per_page: 36 },
   })
 
   const repos: GitHubRepo[] = data.items ?? []
   const projects = await Promise.all(repos.map(normalizeRepo))
-
   cache.set(CACHE_KEY, projects, TTL)
   return projects
 }
 
 // ---------------------------------------------------------------------------
 // Single repo details
-// Cache TTL: 30 minutes
 // ---------------------------------------------------------------------------
 
 export async function fetchRepoDetails(owner: string, repo: string): Promise<Project | null> {
   const CACHE_KEY = `repo:${owner}:${repo}`
-  const TTL = 1800 // 30 minutes
+  const TTL = 1800
 
   const cached = cache.get<Project>(CACHE_KEY, TTL)
-  if (cached) {
-    console.log(`[cache hit] ${CACHE_KEY}`)
-    return cached
-  }
-
-  console.log(`[cache miss] fetching repo details for ${owner}/${repo}...`)
+  if (cached) { console.log(`[cache hit] ${CACHE_KEY}`); return cached }
 
   try {
     const { data } = await github.get<GitHubRepo>(`/repos/${owner}/${repo}`)
@@ -215,8 +190,7 @@ export async function fetchRepoDetails(owner: string, repo: string): Promise<Pro
 }
 
 // ---------------------------------------------------------------------------
-// Issues for a repo
-// Cache TTL: 15 minutes (issues change more frequently)
+// Issues
 // ---------------------------------------------------------------------------
 
 export interface GitHubIssue {
@@ -238,15 +212,10 @@ export async function fetchRepoIssues(
   goodFirstOnly = false
 ): Promise<GitHubIssue[]> {
   const CACHE_KEY = `issues:${owner}:${repo}:${goodFirstOnly ? 'beginner' : 'all'}`
-  const TTL = 900 // 15 minutes
+  const TTL = 900
 
   const cached = cache.get<GitHubIssue[]>(CACHE_KEY, TTL)
-  if (cached) {
-    console.log(`[cache hit] ${CACHE_KEY}`)
-    return cached
-  }
-
-  console.log(`[cache miss] fetching issues for ${owner}/${repo}...`)
+  if (cached) { console.log(`[cache hit] ${CACHE_KEY}`); return cached }
 
   try {
     const { data } = await github.get<GitHubIssue[]>(`/repos/${owner}/${repo}/issues`, {
@@ -264,4 +233,126 @@ export async function fetchRepoIssues(
     console.error(`Failed to fetch issues for ${owner}/${repo}:`, err)
     return []
   }
+}
+
+// ---------------------------------------------------------------------------
+// Contributor Fit
+// Fetches top 30 contributors by commit count, takes top 25th percentile,
+// averages their public repos, followers, account age, primary language.
+// Cache TTL: 2 hours (expensive call)
+// ---------------------------------------------------------------------------
+
+interface RawContributor {
+  login: string
+  contributions: number
+}
+
+interface GitHubUser {
+  login: string
+  public_repos: number
+  followers: number
+  created_at: string
+}
+
+interface GitHubUserRepo {
+  language: string | null
+}
+
+export async function fetchContributorFit(owner: string, repo: string): Promise<ContributorFit> {
+  const CACHE_KEY = `contributor-fit:${owner}:${repo}`
+  const TTL = 7200 // 2 hours
+
+  const cached = cache.get<ContributorFit>(CACHE_KEY, TTL)
+  if (cached) { console.log(`[cache hit] ${CACHE_KEY}`); return cached }
+
+  console.log(`[cache miss] fetching contributor fit for ${owner}/${repo}...`)
+
+  // Step 1: Get top 30 contributors sorted by contributions descending
+  const { data: contributors } = await github.get<RawContributor[]>(
+    `/repos/${owner}/${repo}/contributors`,
+    { params: { per_page: 30, anon: false } }
+  )
+
+  if (!contributors || contributors.length === 0) {
+    return {
+      avgContributions: 0,
+      avgPublicRepos: 0,
+      avgFollowers: 0,
+      avgAccountAgeDays: 0,
+      topLanguage: 'Unknown',
+      contributorCount: 0,
+    }
+  }
+
+  // Step 2: Take top 25th percentile by contribution count
+  const sorted = [...contributors].sort((a, b) => b.contributions - a.contributions)
+  const topN = Math.max(1, Math.ceil(sorted.length * 0.25))
+  const topContributors = sorted.slice(0, topN)
+
+  // Step 3: Fetch each user's profile (rate-limit friendly: cap at 10)
+  const capped = topContributors.slice(0, 10)
+  const userProfiles = await Promise.allSettled(
+    capped.map(c => github.get<GitHubUser>(`/users/${c.login}`))
+  )
+
+  const validProfiles: GitHubUser[] = userProfiles
+    .filter((r): r is PromiseFulfilledResult<{ data: GitHubUser }> => r.status === 'fulfilled')
+    .map(r => r.value.data)
+
+  if (validProfiles.length === 0) {
+    return {
+      avgContributions: Math.round(capped.reduce((s, c) => s + c.contributions, 0) / capped.length),
+      avgPublicRepos: 0,
+      avgFollowers: 0,
+      avgAccountAgeDays: 0,
+      topLanguage: 'Unknown',
+      contributorCount: topContributors.length,
+    }
+  }
+
+  // Step 4: Compute averages
+  const now = Date.now()
+
+  const avgContributions = Math.round(
+    capped.reduce((s, c) => s + c.contributions, 0) / capped.length
+  )
+  const avgPublicRepos = Math.round(
+    validProfiles.reduce((s, u) => s + u.public_repos, 0) / validProfiles.length
+  )
+  const avgFollowers = Math.round(
+    validProfiles.reduce((s, u) => s + u.followers, 0) / validProfiles.length
+  )
+  const avgAccountAgeDays = Math.round(
+    validProfiles.reduce((s, u) => s + (now - new Date(u.created_at).getTime()), 0) /
+    validProfiles.length / (1000 * 60 * 60 * 24)
+  )
+
+  // Step 5: Find most common primary language across their repos (sample first user only to save quota)
+  let topLanguage = 'Unknown'
+  try {
+    const { data: repos } = await github.get<GitHubUserRepo[]>(
+      `/users/${validProfiles[0].login}/repos`,
+      { params: { per_page: 30, sort: 'updated' } }
+    )
+    const langCount: Record<string, number> = {}
+    for (const r of repos) {
+      if (r.language) langCount[r.language] = (langCount[r.language] ?? 0) + 1
+    }
+    const sorted = Object.entries(langCount).sort(([, a], [, b]) => b - a)
+    if (sorted.length > 0) topLanguage = sorted[0][0]
+  } catch {
+    // silently ignore
+  }
+
+  const result: ContributorFit = {
+    avgContributions,
+    avgPublicRepos,
+    avgFollowers,
+    avgAccountAgeDays,
+    topLanguage,
+    contributorCount: topContributors.length,
+  }
+
+  cache.set(CACHE_KEY, result, TTL)
+  return result
 }

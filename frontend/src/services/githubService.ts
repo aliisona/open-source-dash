@@ -1,5 +1,14 @@
 import { Project, Issue } from '../types'
 
+export interface ContributorFit {
+  avgContributions: number
+  avgPublicRepos: number
+  avgFollowers: number
+  avgAccountAgeDays: number
+  topLanguage: string
+  contributorCount: number
+}
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
 async function apiFetch<T>(path: string): Promise<T> {
@@ -77,6 +86,15 @@ export async function fetchRepoIssues(
   } catch (err) {
     console.error(`fetchRepoIssues failed for ${owner}/${repo}:`, err)
     return []
+  }
+}
+
+export async function fetchContributorFit(owner: string, repo: string): Promise<ContributorFit | null> {
+  try {
+    return await apiFetch<ContributorFit>(`/api/projects/${owner}/${repo}/contributor-fit`)
+  } catch (err) {
+    console.error(`fetchContributorFit failed for ${owner}/${repo}:`, err)
+    return null
   }
 }
 

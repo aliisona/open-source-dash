@@ -1,4 +1,5 @@
 import { X, Star, AlertCircle, Zap, ExternalLink, GitFork, Tag, MessageSquare, User } from 'lucide-react'
+import ContributorFitSection from './ContributorFitSection'
 import { Project, Issue } from '../../types'
 import { useEffect, useState } from 'react'
 import { fetchRepoIssues } from '../../services/githubService'
@@ -218,6 +219,21 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             </div>
           )}
 
+          {/* Contributor Fit */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <User className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
+              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                Contributor Fit
+              </span>
+            </div>
+            <ContributorFitSection
+              owner={project.owner}
+              repo={project.name}
+              projectLanguage={project.language}
+            />
+          </div>
+
           {/* Issues section */}
           <div>
             {/* Section header */}
@@ -251,6 +267,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                 >
                   Good First Issues
                 </button>
+
               </div>
             </div>
 

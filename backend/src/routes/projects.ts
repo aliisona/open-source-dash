@@ -4,15 +4,11 @@ import {
   fetchTrendingProjects,
   fetchRepoDetails,
   fetchRepoIssues,
+  fetchContributorFit,
 } from '../services/githubService'
 
 const router = Router()
 
-/**
- * GET /api/projects
- * Returns beginner-friendly projects with good first issues.
- * Cached for 1 hour.
- */
 router.get('/', async (_req: Request, res: Response) => {
   try {
     const projects = await fetchDiscoverProjects()
@@ -23,11 +19,6 @@ router.get('/', async (_req: Request, res: Response) => {
   }
 })
 
-/**
- * GET /api/projects/trending
- * Returns trending projects sorted by stars, pushed in last 7 days.
- * Cached for 1 hour.
- */
 router.get('/trending', async (_req: Request, res: Response) => {
   try {
     const projects = await fetchTrendingProjects()
@@ -38,11 +29,29 @@ router.get('/trending', async (_req: Request, res: Response) => {
   }
 })
 
-/**
- * GET /api/projects/:owner/:repo
- * Returns details for a single repository.
- * Cached for 30 minutes.
- */
+router.get('/:owner/:repo/contributor-fit', async (req: Request, res: Response) => {
+  const { owner, repo } = req.params
+  try {
+    const fit = await fetchContributorFit(owner, repo)
+    res.json({ data: fit })
+  } catch (err) {
+    console.error(`GET /api/projects/${owner}/${repo}/contributor-fit failed:`, err)
+    res.status(500).json({ error: 'Failed to fetch contributor fit' })
+  }
+})
+
+router.get('/:owner/:repo/issues', async (req: Request, res: Response) => {
+  const { owner, repo } = req.params
+  const goodFirstOnly = req.query.beginner === 'true'
+  try {
+    const issues = await fetchRepoIssues(owner, repo, goodFirstOnly)
+    res.json({ data: issues })
+  } catch (err) {
+    console.error(`GET /api/projects/${owner}/${repo}/issues failed:`, err)
+    res.status(500).json({ error: 'Failed to fetch issues from GitHub' })
+  }
+})
+
 router.get('/:owner/:repo', async (req: Request, res: Response) => {
   const { owner, repo } = req.params
   try {
@@ -55,24 +64,6 @@ router.get('/:owner/:repo', async (req: Request, res: Response) => {
   } catch (err) {
     console.error(`GET /api/projects/${owner}/${repo} failed:`, err)
     res.status(500).json({ error: 'Failed to fetch repo details from GitHub' })
-  }
-})
-
-/**
- * GET /api/projects/:owner/:repo/issues
- * Returns open issues for a repository.
- * Add ?beginner=true to filter by "good first issue" label.
- * Cached for 15 minutes.
- */
-router.get('/:owner/:repo/issues', async (req: Request, res: Response) => {
-  const { owner, repo } = req.params
-  const goodFirstOnly = req.query.beginner === 'true'
-  try {
-    const issues = await fetchRepoIssues(owner, repo, goodFirstOnly)
-    res.json({ data: issues })
-  } catch (err) {
-    console.error(`GET /api/projects/${owner}/${repo}/issues failed:`, err)
-    res.status(500).json({ error: 'Failed to fetch issues from GitHub' })
   }
 })
 
