@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Github, LogOut, LogIn } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import UserProfilePanel from '../profile/UserProfilePanel'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -8,6 +9,7 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, loading, signInWithGitHub, signOut } = useAuth()
+  const [profileOpen, setProfileOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
@@ -30,23 +32,27 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <div className="w-8 h-8 rounded-full bg-gray-800 animate-pulse" />
             ) : user ? (
               <>
-                {/* Avatar + username */}
-                <div className="flex items-center gap-2">
+                {/* Clickable avatar + username — opens profile panel */}
+                <button
+                  onClick={() => setProfileOpen(true)}
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                  aria-label="Open profile"
+                >
                   {user.user_metadata?.avatar_url ? (
                     <img
                       src={user.user_metadata.avatar_url}
                       alt={user.user_metadata.user_name ?? 'User'}
-                      className="w-8 h-8 rounded-full border border-gray-700"
+                      className="w-8 h-8 rounded-full border border-gray-700 hover:border-indigo-500 transition-colors"
                     />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold">
                       {(user.user_metadata?.user_name ?? 'U')[0].toUpperCase()}
                     </div>
                   )}
-                  <span className="text-sm text-gray-300 hidden sm:block">
+                  <span className="text-sm text-gray-300 hidden sm:block hover:text-white transition-colors">
                     {user.user_metadata?.user_name ?? user.email}
                   </span>
-                </div>
+                </button>
 
                 {/* Sign out */}
                 <button
@@ -74,6 +80,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <main className="max-w-7xl mx-auto px-6 py-8">
         {children}
       </main>
+
+      {/* Profile panel — rendered outside main so it overlays everything */}
+      {profileOpen && user && (
+        <UserProfilePanel onClose={() => setProfileOpen(false)} />
+      )}
     </div>
   )
 }
