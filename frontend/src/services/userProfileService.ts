@@ -17,6 +17,7 @@ export interface GitHubUserStats {
   company: string | null
   location: string | null
   profileUrl: string
+  createdAt: string
 }
 
 export interface GitHubRepo {
