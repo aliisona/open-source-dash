@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Github, LogOut, LogIn } from 'lucide-react'
+import { LogOut, LogIn } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import UserProfilePanel from '../profile/UserProfilePanel'
 import ThemeToggle from '../ui/ThemeToggle'
@@ -28,14 +28,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="rounded-lg p-1.5" style={{ backgroundColor: 'var(--accent)' }}>
-              <Github className="w-5 h-5" style={{ color: 'var(--accent-fg)' }} />
+            <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--accent)' }}>
+              <img src="/soup.webp" alt="sopu dash" className="w-8 h-8" style={{ imageRendering: 'pixelated' }} />
             </div>
             <span
               className="text-lg font-semibold tracking-tight"
               style={{ color: 'var(--text-primary)' }}
             >
-              Sopu Dashboard
+              sopu dash
             </span>
           </div>
 
