@@ -1,14 +1,29 @@
 import { useEffect, useRef, useState } from 'react'
 import ProjectCard from '../components/cards/ProjectCard'
+import Pagination from '../components/ui/Pagination'
 import { Project } from '../types'
 import { fetchDiscoverProjects } from '../services/githubService'
 import { AlertCircle, ArrowDown, GitPullRequest, Star, Users } from 'lucide-react'
+
+const PAGE_SIZE = 12
+const TOTAL_PAGES = 3
 
 export default function DiscoverPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
   const gridRef = useRef<HTMLDivElement>(null)
+
+  const paginated = projects.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  )
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   const load = () => {
     setLoading(true)
@@ -156,11 +171,21 @@ export default function DiscoverPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {projects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {paginated.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </div>
+            {projects.length > PAGE_SIZE && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={Math.min(TOTAL_PAGES, Math.ceil(projects.length / PAGE_SIZE))}
+                onPageChange={handlePageChange}
+                githubExploreUrl="https://github.com/explore"
+              />
+            )}
+          </>
         )}
       </div>
     </div>

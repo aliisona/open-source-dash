@@ -137,7 +137,7 @@ export async function fetchDiscoverProjects(): Promise<Project[]> {
       q: query,
       sort: 'updated',
       order: 'desc',
-      per_page: 12,
+      per_page: 36,
     },
   })
 
@@ -175,7 +175,7 @@ export async function fetchTrendingProjects(): Promise<Project[]> {
       q: query,
       sort: 'stars',
       order: 'desc',
-      per_page: 12,
+      per_page: 36,
     },
   })
 
