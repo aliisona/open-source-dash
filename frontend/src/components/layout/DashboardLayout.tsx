@@ -81,9 +81,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         {children}
       </main>
 
-      {/* Profile panel — rendered outside main so it overlays everything */}
-      {profileOpen && user && (
-        <UserProfilePanel onClose={() => setProfileOpen(false)} />
+      {/* Profile panel — always rendered so CSS transition has an element to animate from */}
+      {user && (
+        <UserProfilePanel open={profileOpen} onClose={() => setProfileOpen(false)} />
       )}
     </div>
   )

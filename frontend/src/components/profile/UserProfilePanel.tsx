@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { X, Star, GitFork, MapPin, Users, BookOpen, ExternalLink, Code } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { fetchUserProfile, UserProfile, TopLanguage, GitHubRepo } from '../../services/userProfileService'
@@ -24,6 +24,7 @@ const LANGUAGE_COLORS: Record<string, string> = {
 }
 
 interface UserProfilePanelProps {
+  open: boolean
   onClose: () => void
 }
 
@@ -93,32 +94,62 @@ function RepoRow({ repo }: { repo: GitHubRepo }) {
   )
 }
 
-export default function UserProfilePanel({ onClose }: UserProfilePanelProps) {
+export default function UserProfilePanel({ open, onClose }: UserProfilePanelProps) {
   const { user } = useAuth()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [visible, setVisible] = useState(false)
+  const [rendered, setRendered] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
 
   const username = user?.user_metadata?.user_name as string | undefined
 
+  // When open becomes true, render first then use double rAF so the browser
+  // paints the off-screen starting position before animating in
+  useEffect(() => {
+    if (open) {
+      setRendered(true)
+      let frame2: number
+      const frame1 = requestAnimationFrame(() => {
+        frame2 = requestAnimationFrame(() => setVisible(true))
+      })
+      return () => {
+        cancelAnimationFrame(frame1)
+        cancelAnimationFrame(frame2)
+      }
+    } else {
+      setVisible(false)
+      const timeout = setTimeout(() => setRendered(false), 420)
+      return () => clearTimeout(timeout)
+    }
+  }, [open])
+
+  // Animate out then call onClose — wait for transition to finish
+  const handleClose = useCallback(() => {
+    setVisible(false)
+    setTimeout(onClose, 420)
+  }, [onClose])
+
+  // Fetch profile only when opened
+  const hasFetched = useRef(false)
+
   // Close on Escape
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') handleClose()
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [onClose])
+  }, [handleClose])
 
   // Close on click outside
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        onClose()
+        handleClose()
       }
     }
-    // Delay so the click that opened the panel doesn't immediately close it
     const timeout = setTimeout(() => {
       document.addEventListener('mousedown', handleClick)
     }, 100)
@@ -126,34 +157,45 @@ export default function UserProfilePanel({ onClose }: UserProfilePanelProps) {
       clearTimeout(timeout)
       document.removeEventListener('mousedown', handleClick)
     }
-  }, [onClose])
+  }, [handleClose])
 
-  // Fetch profile
+  // Fetch profile once when first opened
   useEffect(() => {
-    if (!username) return
+    if (!open || !username || hasFetched.current) return
+    hasFetched.current = true
     setLoading(true)
     setError(null)
     fetchUserProfile(username)
       .then(setProfile)
       .catch((err) => setError(err.message ?? 'Failed to load profile'))
       .finally(() => setLoading(false))
-  }, [username])
+  }, [open, username])
+
+  if (!rendered) return null
 
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" />
+      <div
+        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-400"
+        style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none' }}
+      />
 
       {/* Slide-in panel */}
       <div
         ref={panelRef}
-        className="fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-gray-900 border-l border-gray-800 shadow-2xl flex flex-col overflow-hidden animate-slide-in"
+        className="fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-gray-900 border-l border-gray-800 shadow-2xl flex flex-col overflow-hidden"
+        style={{
+          transform: visible ? 'translateX(0)' : 'translateX(100%)',
+          opacity: visible ? 1 : 0,
+          transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.35s ease',
+        }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800 flex-shrink-0">
           <span className="text-sm font-semibold text-white">Your Profile</span>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-500 hover:text-white transition-colors"
             aria-label="Close profile"
           >
