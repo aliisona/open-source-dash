@@ -167,7 +167,7 @@ export default function DiscoverPage() {
               No projects found
             </p>
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Try adjusting the search filters in githubService.ts
+              Try again in a moment.
             </p>
           </div>
         ) : (
