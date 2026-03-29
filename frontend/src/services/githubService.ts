@@ -1,4 +1,4 @@
-import { Project } from '../types'
+import { Project, Issue } from '../types'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
@@ -27,14 +27,53 @@ export async function fetchTrendingProjects(): Promise<Project[]> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Raw shape returned by the backend (mirrors GitHub REST API)
+// ---------------------------------------------------------------------------
+
+interface RawIssue {
+  id: number
+  number: number
+  title: string
+  html_url: string
+  labels: { name: string; color: string }[]
+  created_at: string
+  updated_at: string
+  user: { login: string; avatar_url: string }
+  comments: number
+  body: string | null
+}
+
+function normalizeIssue(raw: RawIssue): Issue {
+  return {
+    id: raw.id,
+    number: raw.number,
+    title: raw.title,
+    url: raw.html_url,
+    labels: raw.labels ?? [],
+    createdAt: raw.created_at,
+    updatedAt: raw.updated_at,
+    author: raw.user?.login ?? 'unknown',
+    authorAvatar: raw.user?.avatar_url ?? '',
+    comments: raw.comments ?? 0,
+    body: raw.body,
+    isGoodFirstIssue: (raw.labels ?? []).some(
+      (l) => l.name.toLowerCase() === 'good first issue'
+    ),
+  }
+}
+
 export async function fetchRepoIssues(
   owner: string,
   repo: string,
   goodFirstOnly = false
-): Promise<unknown[]> {
+): Promise<Issue[]> {
   try {
     const query = goodFirstOnly ? '?beginner=true' : ''
-    return await apiFetch<unknown[]>(`/api/projects/${owner}/${repo}/issues${query}`)
+    const raw = await apiFetch<RawIssue[]>(
+      `/api/projects/${owner}/${repo}/issues${query}`
+    )
+    return (raw ?? []).map(normalizeIssue)
   } catch (err) {
     console.error(`fetchRepoIssues failed for ${owner}/${repo}:`, err)
     return []

@@ -13,6 +13,21 @@ export interface Project {
   repoUrl: string
 }
 
+export interface Issue {
+  id: number
+  number: number
+  title: string
+  url: string
+  labels: { name: string; color: string }[]
+  createdAt: string
+  updatedAt: string
+  author: string
+  authorAvatar: string
+  comments: number
+  body: string | null
+  isGoodFirstIssue: boolean
+}
+
 export type TabId = 'discover' | 'trending' | 'saved'
 
 export interface Tab {

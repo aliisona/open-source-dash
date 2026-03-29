@@ -35,7 +35,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               className="text-lg font-semibold tracking-tight"
               style={{ color: 'var(--text-primary)' }}
             >
-              Open Source Dashboard
+              Sopu Dashboard
             </span>
           </div>
 
