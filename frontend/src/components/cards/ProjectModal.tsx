@@ -1,4 +1,4 @@
-import { X, Star, AlertCircle, Zap, ExternalLink, GitFork, Tag, MessageSquare, User } from 'lucide-react'
+import { X, Star, AlertCircle, Zap, ExternalLink, GitFork, Tag, MessageSquare, User, ChevronDown, ChevronUp } from 'lucide-react'
 import ContributorFitSection from './ContributorFitSection'
 import { Project, Issue } from '../../types'
 import { useEffect, useState } from 'react'
@@ -20,22 +20,47 @@ function formatDate(dateStr: string): string {
 }
 
 function IssueRow({ issue }: { issue: Issue }) {
+  const [expanded, setExpanded] = useState(false)
+
   return (
-    <a
-      href={issue.url}
-      target="_blank"
-      rel="noopener noreferrer"
+    <div
+      onClick={() => issue.body && setExpanded(v => !v)}
       className="flex flex-col gap-2 p-3 rounded-xl transition-colors"
-      style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
-      onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--accent-border)'}
-      onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--border)'}
+      style={{
+        backgroundColor: 'var(--bg-elevated)',
+        border: '1px solid var(--border)',
+        cursor: issue.body ? 'pointer' : 'default',
+      }}
+      onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--accent-border)'}
+      onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)'}
     >
       {/* Title row */}
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-medium leading-snug" style={{ color: 'var(--text-primary)' }}>
-          #{issue.number} {issue.title}
-        </p>
-        <ExternalLink className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: 'var(--text-muted)' }} />
+        <div className="flex items-center gap-1.5 min-w-0">
+          {issue.body && (
+            <span className="flex-shrink-0" style={{ color: expanded ? 'var(--accent)' : 'var(--text-muted)' }}>
+              {expanded
+                ? <ChevronUp className="w-3.5 h-3.5" />
+                : <ChevronDown className="w-3.5 h-3.5" />}
+            </span>
+          )}
+          <p className="text-sm font-medium leading-snug" style={{ color: 'var(--text-primary)' }}>
+            #{issue.number} {issue.title}
+          </p>
+        </div>
+        <a
+          href={issue.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open issue on GitHub"
+          onClick={e => e.stopPropagation()}
+          className="flex-shrink-0 mt-0.5 transition-colors"
+          style={{ color: 'var(--text-muted)' }}
+          onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--accent)'}
+          onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--text-muted)'}
+        >
+          <ExternalLink className="w-3.5 h-3.5" />
+        </a>
       </div>
 
       {/* Labels */}
@@ -69,7 +94,20 @@ function IssueRow({ issue }: { issue: Issue }) {
         </span>
         <span>Opened {formatDate(issue.createdAt)}</span>
       </div>
-    </a>
+
+      {/* Expandable description */}
+      {expanded && issue.body && (
+        <p
+          className="text-xs leading-relaxed whitespace-pre-wrap max-h-40 overflow-y-auto pt-2"
+          style={{
+            color: 'var(--text-secondary)',
+            borderTop: '1px solid var(--border)',
+          }}
+        >
+          {issue.body}
+        </p>
+      )}
+    </div>
   )
 }
 

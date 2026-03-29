@@ -71,7 +71,6 @@ export default function ProjectCard({ project, onUnsave }: ProjectCardProps) {
           ;(e.currentTarget as HTMLDivElement).style.boxShadow = 'none'
         }}
       >
-        {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs mb-0.5" style={{ color: 'var(--text-muted)' }}>
@@ -115,12 +114,10 @@ export default function ProjectCard({ project, onUnsave }: ProjectCardProps) {
           </div>
         </div>
 
-        {/* Description */}
         <p className="text-sm leading-relaxed line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
           {project.description}
         </p>
 
-        {/* Topics */}
         {project.topics.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {project.topics.slice(0, 4).map(topic => (
@@ -139,7 +136,6 @@ export default function ProjectCard({ project, onUnsave }: ProjectCardProps) {
           </div>
         )}
 
-        {/* Stats row */}
         <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
           <span className="flex items-center gap-1.5">
             <span
@@ -158,7 +154,6 @@ export default function ProjectCard({ project, onUnsave }: ProjectCardProps) {
           </span>
         </div>
 
-        {/* Footer */}
         <div
           className="flex items-center justify-between pt-2 mt-auto"
           style={{ borderTop: '1px solid var(--border)' }}
@@ -187,7 +182,6 @@ export default function ProjectCard({ project, onUnsave }: ProjectCardProps) {
           </button>
         </div>
 
-        {/* Last updated */}
         <p className="text-xs -mt-2" style={{ color: 'var(--text-muted)' }}>
           Updated {formatDate(project.lastUpdated)}
         </p>

@@ -50,14 +50,14 @@ function overallScore(metrics: Metric[]): number {
 }
 
 function scoreColor(score: number): string {
-  if (score >= 75) return '#34d399' // green
-  if (score >= 45) return '#facc15' // yellow
+  if (score >= 30) return '#34d399' // green
+  if (score >= 12) return '#facc15' // yellow
   return '#f87171'                  // red
 }
 
 function scoreLabel(score: number): string {
-  if (score >= 75) return 'Great fit'
-  if (score >= 45) return 'Decent fit'
+  if (score >= 30) return 'Great fit'
+  if (score >= 12) return 'Decent fit'
   return 'Stretch goal'
 }
 
