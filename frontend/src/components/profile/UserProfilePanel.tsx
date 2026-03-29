@@ -30,9 +30,12 @@ interface UserProfilePanelProps {
 
 function StatBox({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="flex flex-col items-center bg-gray-800/60 rounded-xl p-3 gap-1">
-      <span className="text-lg font-bold text-white">{value}</span>
-      <span className="text-xs text-gray-400">{label}</span>
+    <div
+      className="flex flex-col items-center rounded-xl p-3 gap-1"
+      style={{ backgroundColor: 'var(--bg-elevated)' }}
+    >
+      <span className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{value}</span>
+      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</span>
     </div>
   )
 }
@@ -43,15 +46,15 @@ function LanguageBar({ lang }: { lang: TopLanguage }) {
     <div className="flex items-center gap-3">
       <span className="flex items-center gap-1.5 w-28 flex-shrink-0">
         <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-        <span className="text-sm text-gray-300 truncate">{lang.name}</span>
+        <span className="text-sm truncate" style={{ color: 'var(--text-secondary)' }}>{lang.name}</span>
       </span>
-      <div className="flex-1 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--bg-elevated)' }}>
         <div
           className="h-full rounded-full transition-all duration-500"
           style={{ width: `${lang.percentage}%`, backgroundColor: color }}
         />
       </div>
-      <span className="text-xs text-gray-500 w-8 text-right">{lang.percentage}%</span>
+      <span className="text-xs w-8 text-right" style={{ color: 'var(--text-muted)' }}>{lang.percentage}%</span>
     </div>
   )
 }
@@ -63,16 +66,19 @@ function RepoRow({ repo }: { repo: GitHubRepo }) {
       href={repo.html_url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-start justify-between gap-3 p-3 rounded-xl bg-gray-800/40 hover:bg-gray-800 transition-colors group"
+      className="flex items-start justify-between gap-3 p-3 rounded-xl transition-colors group"
+      style={{ backgroundColor: 'var(--bg-elevated)' }}
+      onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'var(--border)'}
+      onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'var(--bg-elevated)'}
     >
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-200 group-hover:text-indigo-300 transition-colors truncate">
+        <p className="text-sm font-medium transition-colors truncate" style={{ color: 'var(--text-primary)' }}>
           {repo.name}
         </p>
         {repo.description && (
-          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{repo.description}</p>
+          <p className="text-xs mt-0.5 line-clamp-1" style={{ color: 'var(--text-muted)' }}>{repo.description}</p>
         )}
-        <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
+        <div className="flex items-center gap-3 mt-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
           {repo.language && (
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
@@ -89,7 +95,7 @@ function RepoRow({ repo }: { repo: GitHubRepo }) {
           </span>
         </div>
       </div>
-      <ExternalLink className="w-3.5 h-3.5 text-gray-600 group-hover:text-indigo-400 flex-shrink-0 mt-0.5 transition-colors" />
+      <ExternalLink className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 transition-colors" style={{ color: 'var(--text-muted)' }} />
     </a>
   )
 }
@@ -184,19 +190,27 @@ export default function UserProfilePanel({ open, onClose }: UserProfilePanelProp
       {/* Slide-in panel */}
       <div
         ref={panelRef}
-        className="fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-gray-900 border-l border-gray-800 shadow-2xl flex flex-col overflow-hidden"
+        className="fixed top-0 right-0 z-50 h-full w-full max-w-sm shadow-2xl flex flex-col overflow-hidden"
         style={{
+          backgroundColor: 'var(--bg-surface)',
+          borderLeft: '1px solid var(--border)',
           transform: visible ? 'translateX(0)' : 'translateX(100%)',
           opacity: visible ? 1 : 0,
           transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.35s ease',
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800 flex-shrink-0">
-          <span className="text-sm font-semibold text-white">Your Profile</span>
+        <div
+          className="flex items-center justify-between px-5 py-4 flex-shrink-0"
+          style={{ borderBottom: '1px solid var(--border)' }}
+        >
+          <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Your Profile</span>
           <button
             onClick={handleClose}
-            className="text-gray-500 hover:text-white transition-colors"
+            className="transition-colors"
+            style={{ color: 'var(--text-muted)' }}
+            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)'}
+            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)'}
             aria-label="Close profile"
           >
             <X className="w-5 h-5" />
@@ -209,24 +223,24 @@ export default function UserProfilePanel({ open, onClose }: UserProfilePanelProp
           {loading && (
             <div className="flex flex-col gap-4 animate-pulse">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-gray-800" />
+                <div className="w-16 h-16 rounded-full" style={{ backgroundColor: 'var(--bg-elevated)' }} />
                 <div className="flex flex-col gap-2 flex-1">
-                  <div className="h-4 bg-gray-800 rounded w-32" />
-                  <div className="h-3 bg-gray-800 rounded w-24" />
+                  <div className="h-4 rounded w-32" style={{ backgroundColor: 'var(--bg-elevated)' }} />
+                  <div className="h-3 rounded w-24" style={{ backgroundColor: 'var(--bg-elevated)' }} />
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {[0, 1, 2].map(i => <div key={i} className="h-16 bg-gray-800 rounded-xl" />)}
+                {[0, 1, 2].map(i => <div key={i} className="h-16 rounded-xl" style={{ backgroundColor: 'var(--bg-elevated)' }} />)}
               </div>
-              <div className="h-32 bg-gray-800 rounded-xl" />
-              <div className="h-48 bg-gray-800 rounded-xl" />
+              <div className="h-32 rounded-xl" style={{ backgroundColor: 'var(--bg-elevated)' }} />
+              <div className="h-48 rounded-xl" style={{ backgroundColor: 'var(--bg-elevated)' }} />
             </div>
           )}
 
           {error && (
             <div className="text-center py-12 text-red-400 text-sm">
               <p>{error}</p>
-              <p className="text-gray-500 text-xs mt-2">
+              <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
                 Make sure you're signed in with GitHub.
               </p>
             </div>
@@ -239,29 +253,31 @@ export default function UserProfilePanel({ open, onClose }: UserProfilePanelProp
                 <img
                   src={profile.stats.avatarUrl}
                   alt={profile.stats.login}
-                  className="w-16 h-16 rounded-full border-2 border-gray-700"
+                  className="w-16 h-16 rounded-full"
+                  style={{ border: '2px solid var(--border-subtle)' }}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-base font-bold text-white truncate">
+                  <p className="text-base font-bold truncate" style={{ color: 'var(--text-primary)' }}>
                     {profile.stats.name ?? profile.stats.login}
                   </p>
                   <a
                     href={profile.stats.profileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                    className="text-xs transition-colors"
+                    style={{ color: 'var(--accent)' }}
                   >
                     @{profile.stats.login}
                   </a>
                   {profile.stats.bio && (
-                    <p className="text-xs text-gray-400 mt-1 line-clamp-2">{profile.stats.bio}</p>
+                    <p className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>{profile.stats.bio}</p>
                   )}
                 </div>
               </div>
 
               {/* Location / company */}
               {(profile.stats.location || profile.stats.company) && (
-                <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                <div className="flex flex-wrap gap-3 text-xs" style={{ color: 'var(--text-muted)' }}>
                   {profile.stats.location && (
                     <span className="flex items-center gap-1">
                       <MapPin className="w-3 h-3" />

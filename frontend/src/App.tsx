@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { AuthProvider } from './context/AuthContext'
+import { ThemeProvider } from './context/ThemeContext'
 import DashboardLayout from './components/layout/DashboardLayout'
 import TabNavigation from './components/navigation/TabNavigation'
 import DiscoverPage from './pages/DiscoverPage'
@@ -33,11 +34,13 @@ export default function App() {
   }
 
   return (
-    <AuthProvider>
-      <DashboardLayout>
-        <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
-        {renderPage()}
-      </DashboardLayout>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <DashboardLayout>
+          <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
+          {renderPage()}
+        </DashboardLayout>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }

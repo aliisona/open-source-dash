@@ -3,7 +3,51 @@
 @tailwind utilities;
 
 @layer base {
+  /* ── Dark mode (default) — dark backgrounds, purple accents ── */
+  :root,
+  .dark {
+    --bg-base:        #030712;
+    --bg-surface:     #111827;
+    --bg-elevated:    #1f2937;
+    --border:         #1f2937;
+    --border-subtle:  #374151;
+
+    --text-primary:   #f9fafb;
+    --text-secondary: #9ca3af;
+    --text-muted:     #4b5563;
+
+    --accent:         #6366f1;
+    --accent-hover:   #4f46e5;
+    --accent-subtle:  #1e1b4b;
+    --accent-border:  #3730a3;
+
+    --accent-fg:      #ffffff;
+  }
+
+  /* ── Light mode — warm cream page background, white cards ── */
+  .light {
+    --bg-base:        #fdf6ee;
+    --bg-surface:     #ffffff;
+    --bg-elevated:    #f5ede0;
+    --border:         #e8d9c5;
+    --border-subtle:  #d4bfa0;
+
+    --text-primary:   #1c1008;
+    --text-secondary: #5c3d1e;
+    --text-muted:     #9a7050;
+
+    --accent:         #7c3aed;
+    --accent-hover:   #6d28d9;
+    --accent-subtle:  #ede9fe;
+    --accent-border:  #c4b5fd;
+
+    --accent-fg:      #ffffff;
+  }
+
   body {
-    @apply bg-gray-950 text-gray-100 antialiased;
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    @apply antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 }

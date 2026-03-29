@@ -26,12 +26,8 @@ export default function ProjectCard({ project, onUnsave }: ProjectCardProps) {
   const [savingLoading, setSavingLoading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
 
-  // Check if this project is already saved when user is logged in
   useEffect(() => {
-    if (!user) {
-      setSaved(false)
-      return
-    }
+    if (!user) { setSaved(false); return }
     isProjectSaved(project.id, user.id)
       .then(setSaved)
       .catch(() => setSaved(false))
@@ -59,44 +55,60 @@ export default function ProjectCard({ project, onUnsave }: ProjectCardProps) {
 
   return (
     <>
-      {/* Card — clicking anywhere opens the modal */}
       <div
         onClick={() => setModalOpen(true)}
-        className="group cursor-pointer bg-gray-900 border border-gray-800 rounded-2xl p-6 flex flex-col gap-4 hover:border-indigo-600/60 hover:shadow-lg hover:shadow-indigo-900/20 transition-all duration-200"
+        className="group cursor-pointer rounded-2xl p-6 flex flex-col gap-4 transition-all duration-200"
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+        }}
+        onMouseEnter={e => {
+          (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--accent-border)'
+          ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 30px -8px color-mix(in srgb, var(--accent) 20%, transparent)'
+        }}
+        onMouseLeave={e => {
+          (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)'
+          ;(e.currentTarget as HTMLDivElement).style.boxShadow = 'none'
+        }}
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs text-gray-500 mb-0.5">{project.owner}</p>
-            <h3 className="text-base font-semibold text-white group-hover:text-indigo-300 transition-colors">
+            <p className="text-xs mb-0.5" style={{ color: 'var(--text-muted)' }}>
+              {project.owner}
+            </p>
+            <h3
+              className="text-base font-semibold transition-colors"
+              style={{ color: 'var(--text-primary)' }}
+            >
               {project.name}
             </h3>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
-            {/* Bookmark — stop propagation so it doesn't open the modal */}
             {user && (
               <button
                 onClick={handleBookmark}
                 disabled={savingLoading}
                 aria-label={saved ? 'Unsave project' : 'Save project'}
-                className={`transition-colors ${
-                  saved
-                    ? 'text-indigo-400 hover:text-gray-400'
-                    : 'text-gray-600 hover:text-indigo-400'
-                } disabled:opacity-40`}
+                className="transition-colors disabled:opacity-40"
+                style={{ color: saved ? 'var(--accent)' : 'var(--text-muted)' }}
               >
-                <Bookmark className={`w-4 h-4 ${saved ? 'fill-indigo-400' : ''}`} />
+                <Bookmark
+                  className="w-4 h-4"
+                  fill={saved ? 'var(--accent)' : 'none'}
+                />
               </button>
             )}
-
-            {/* External link — stop propagation so it doesn't open the modal */}
             <a
               href={project.repoUrl}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="text-gray-500 hover:text-indigo-400 transition-colors"
+              onClick={e => e.stopPropagation()}
+              className="transition-colors"
+              style={{ color: 'var(--text-muted)' }}
               aria-label="Open repository"
+              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--accent)'}
+              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--text-muted)'}
             >
               <ExternalLink className="w-4 h-4" />
             </a>
@@ -104,17 +116,22 @@ export default function ProjectCard({ project, onUnsave }: ProjectCardProps) {
         </div>
 
         {/* Description */}
-        <p className="text-sm text-gray-400 leading-relaxed line-clamp-2">
+        <p className="text-sm leading-relaxed line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
           {project.description}
         </p>
 
         {/* Topics */}
         {project.topics.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {project.topics.slice(0, 4).map((topic) => (
+            {project.topics.slice(0, 4).map(topic => (
               <span
                 key={topic}
-                className="text-xs px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-900"
+                className="text-xs px-2 py-0.5 rounded-full"
+                style={{
+                  backgroundColor: 'var(--accent-subtle)',
+                  color: 'var(--accent)',
+                  border: '1px solid var(--accent-border)',
+                }}
               >
                 {topic}
               </span>
@@ -123,7 +140,7 @@ export default function ProjectCard({ project, onUnsave }: ProjectCardProps) {
         )}
 
         {/* Stats row */}
-        <div className="flex items-center gap-4 text-sm text-gray-400">
+        <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
           <span className="flex items-center gap-1.5">
             <span
               className="w-2.5 h-2.5 rounded-full flex-shrink-0"
@@ -136,43 +153,48 @@ export default function ProjectCard({ project, onUnsave }: ProjectCardProps) {
             {formatNumber(project.stars)}
           </span>
           <span className="flex items-center gap-1">
-            <AlertCircle className="w-3.5 h-3.5 text-gray-500" />
+            <AlertCircle className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
             {formatNumber(project.openIssues)} issues
           </span>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-800 mt-auto">
+        <div
+          className="flex items-center justify-between pt-2 mt-auto"
+          style={{ borderTop: '1px solid var(--border)' }}
+        >
           {project.goodFirstIssues > 0 ? (
-            <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium">
+            <span className="flex items-center gap-1 text-xs text-emerald-500 font-medium">
               <Zap className="w-3 h-3" />
               {project.goodFirstIssues} good first issues
             </span>
           ) : (
-            <span className="text-xs text-gray-600">No beginner issues</span>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              No beginner issues
+            </span>
           )}
-
-          {/* View Issues — stop propagation, opens modal instead */}
           <button
-            onClick={(e) => { e.stopPropagation(); setModalOpen(true) }}
-            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
+            onClick={e => { e.stopPropagation(); setModalOpen(true) }}
+            className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+            style={{
+              backgroundColor: 'var(--accent)',
+              color: 'var(--accent-fg)',
+            }}
+            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--accent-hover)'}
+            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--accent)'}
           >
             View Issues
           </button>
         </div>
 
         {/* Last updated */}
-        <p className="text-xs text-gray-600 -mt-2">
+        <p className="text-xs -mt-2" style={{ color: 'var(--text-muted)' }}>
           Updated {formatDate(project.lastUpdated)}
         </p>
       </div>
 
-      {/* Modal */}
       {modalOpen && (
-        <ProjectModal
-          project={project}
-          onClose={() => setModalOpen(false)}
-        />
+        <ProjectModal project={project} onClose={() => setModalOpen(false)} />
       )}
     </>
   )

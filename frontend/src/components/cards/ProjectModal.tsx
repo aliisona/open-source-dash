@@ -18,7 +18,6 @@ function formatDate(dateStr: string): string {
 }
 
 export default function ProjectModal({ project, onClose }: ProjectModalProps) {
-  // Close on Escape key
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -27,86 +26,103 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
     return () => window.removeEventListener('keydown', handleKey)
   }, [onClose])
 
-  // Prevent background scroll when modal is open
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = '' }
   }, [])
 
   return (
-    // Backdrop
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+      style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
       onClick={onClose}
     >
-      {/* Modal panel — stop click propagation so clicking inside doesn't close */}
       <div
-        className="relative w-full max-w-2xl bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl overflow-y-auto max-h-[90vh]"
-        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-2xl rounded-2xl shadow-2xl overflow-y-auto max-h-[90vh]"
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+        }}
+        onClick={e => e.stopPropagation()}
       >
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-10"
+          className="absolute top-4 right-4 z-10 transition-colors"
+          style={{ color: 'var(--text-muted)' }}
+          onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)'}
+          onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)'}
           aria-label="Close"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Header */}
-        <div className="p-6 pb-4 border-b border-gray-800">
+        <div className="p-6 pb-4" style={{ borderBottom: '1px solid var(--border)' }}>
           <div className="flex items-start justify-between gap-4 pr-8">
             <div>
-              <p className="text-sm text-gray-500 mb-1">{project.owner}</p>
-              <h2 className="text-2xl font-bold text-white">{project.name}</h2>
+              <p className="text-sm mb-1" style={{ color: 'var(--text-muted)' }}>
+                {project.owner}
+              </p>
+              <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                {project.name}
+              </h2>
             </div>
             <a
               href={project.repoUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors flex-shrink-0 mt-1"
+              className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg flex-shrink-0 mt-1 transition-colors"
+              style={{
+                backgroundColor: 'var(--accent)',
+                color: 'var(--accent-fg)',
+              }}
+              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'var(--accent-hover)'}
+              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'var(--accent)'}
             >
               <ExternalLink className="w-3.5 h-3.5" />
               View on GitHub
             </a>
           </div>
 
-          {/* Description */}
-          <p className="mt-3 text-gray-400 leading-relaxed">
+          <p className="mt-3 leading-relaxed text-sm" style={{ color: 'var(--text-secondary)' }}>
             {project.description}
           </p>
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-3 divide-x divide-gray-800 border-b border-gray-800">
-          <div className="flex flex-col items-center py-4 gap-1">
-            <div className="flex items-center gap-1.5 text-yellow-400">
-              <Star className="w-4 h-4" />
-              <span className="text-lg font-semibold">{formatNumber(project.stars)}</span>
+        <div
+          className="grid grid-cols-3"
+          style={{
+            borderBottom: '1px solid var(--border)',
+          }}
+        >
+          {[
+            { icon: <Star className="w-4 h-4" />, color: '#facc15', value: formatNumber(project.stars), label: 'Stars' },
+            { icon: <AlertCircle className="w-4 h-4" />, color: '#f87171', value: formatNumber(project.openIssues), label: 'Open Issues' },
+            { icon: <Zap className="w-4 h-4" />, color: '#34d399', value: project.goodFirstIssues, label: 'Good First Issues' },
+          ].map(({ icon, color, value, label }, i) => (
+            <div
+              key={label}
+              className="flex flex-col items-center py-4 gap-1"
+              style={{
+                borderRight: i < 2 ? '1px solid var(--border)' : 'none',
+              }}
+            >
+              <div className="flex items-center gap-1.5 font-semibold text-lg" style={{ color }}>
+                {icon}
+                <span>{value}</span>
+              </div>
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</span>
             </div>
-            <span className="text-xs text-gray-500">Stars</span>
-          </div>
-          <div className="flex flex-col items-center py-4 gap-1">
-            <div className="flex items-center gap-1.5 text-red-400">
-              <AlertCircle className="w-4 h-4" />
-              <span className="text-lg font-semibold">{formatNumber(project.openIssues)}</span>
-            </div>
-            <span className="text-xs text-gray-500">Open Issues</span>
-          </div>
-          <div className="flex flex-col items-center py-4 gap-1">
-            <div className="flex items-center gap-1.5 text-emerald-400">
-              <Zap className="w-4 h-4" />
-              <span className="text-lg font-semibold">{project.goodFirstIssues}</span>
-            </div>
-            <span className="text-xs text-gray-500">Good First Issues</span>
-          </div>
+          ))}
         </div>
 
         {/* Body */}
         <div className="p-6 flex flex-col gap-6">
 
           {/* Language + last updated */}
-          <div className="flex items-center gap-6 text-sm text-gray-400">
+          <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--text-secondary)' }}>
             <span className="flex items-center gap-2">
               <span
                 className="w-3 h-3 rounded-full"
@@ -115,7 +131,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
               {project.language}
             </span>
             <span className="flex items-center gap-1.5">
-              <GitFork className="w-3.5 h-3.5 text-gray-500" />
+              <GitFork className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
               Updated {formatDate(project.lastUpdated)}
             </span>
           </div>
@@ -124,14 +140,24 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
           {project.topics.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Tag className="w-3.5 h-3.5 text-gray-500" />
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Topics</span>
+                <Tag className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
+                <span
+                  className="text-xs font-medium uppercase tracking-wider"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  Topics
+                </span>
               </div>
               <div className="flex flex-wrap gap-2">
-                {project.topics.map((topic) => (
+                {project.topics.map(topic => (
                   <span
                     key={topic}
-                    className="text-xs px-2.5 py-1 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-900"
+                    className="text-xs px-2.5 py-1 rounded-full"
+                    style={{
+                      backgroundColor: 'var(--accent-subtle)',
+                      color: 'var(--accent)',
+                      border: '1px solid var(--accent-border)',
+                    }}
                   >
                     {topic}
                   </span>
@@ -140,12 +166,15 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             </div>
           )}
 
-          {/* Good first issues placeholder */}
+          {/* Good first issues */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Zap className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <Zap className="w-3.5 h-3.5 text-emerald-500" />
+                <span
+                  className="text-xs font-medium uppercase tracking-wider"
+                  style={{ color: 'var(--text-muted)' }}
+                >
                   Good First Issues
                 </span>
               </div>
@@ -153,27 +182,47 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                 href={`${project.repoUrl}/issues?q=is%3Aopen+label%3A%22good+first+issue%22`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                className="text-xs transition-colors"
+                style={{ color: 'var(--accent)' }}
+                onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--accent-hover)'}
+                onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--accent)'}
               >
                 View all on GitHub →
               </a>
             </div>
             {/* TODO: fetch and render real issues from GitHub API */}
-            <div className="rounded-xl border border-gray-800 bg-gray-950 p-4 text-sm text-gray-500 text-center">
+            <div
+              className="rounded-xl p-4 text-sm text-center"
+              style={{
+                backgroundColor: 'var(--bg-elevated)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-muted)',
+              }}
+            >
               Issue list coming soon — wire up GitHub API here
             </div>
           </div>
 
-          {/* Recent activity placeholder */}
+          {/* Recent activity */}
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <AlertCircle className="w-3.5 h-3.5 text-gray-500" />
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <AlertCircle className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
+              <span
+                className="text-xs font-medium uppercase tracking-wider"
+                style={{ color: 'var(--text-muted)' }}
+              >
                 Recent Activity
               </span>
             </div>
             {/* TODO: fetch recent commits/PRs from GitHub API */}
-            <div className="rounded-xl border border-gray-800 bg-gray-950 p-4 text-sm text-gray-500 text-center">
+            <div
+              className="rounded-xl p-4 text-sm text-center"
+              style={{
+                backgroundColor: 'var(--bg-elevated)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-muted)',
+              }}
+            >
               Recent commits and PRs coming soon — wire up GitHub API here
             </div>
           </div>
